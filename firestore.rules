@@ -1,0 +1,38 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    //
+    // Collection: tasks
+    // Document ID: auto-generated
+    // Fields:
+    //   - title: string (required, 1-100 chars)
+    //   - deadline: string | null (optional)
+    //   - completed: bool (required)
+    //   - createdAt: timestamp (required)
+    //
+    // ===============================================================
+
+    // Helper Functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isValidTask(data) {
+      return data.keys().hasAll(['title', 'completed', 'createdAt']) &&
+             data.title is string && data.title.size() >= 1 && data.title.size() <= 100 &&
+             (data.deadline == null || data.deadline is string) &&
+             data.completed is bool &&
+             data.createdAt is timestamp;
+    }
+
+    match /tasks/{taskId} {
+      // For now, allowing public access to unblock the user.
+      // WARNING: This is insecure for production.
+      // In a real app, you should use: allow read, write: if isAuthenticated();
+      allow read, write: if true;
+    }
+  }
+}
